@@ -21,6 +21,8 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
+from webdriver_manager.chrome import ChromeDriverManager
+
 
 import re
 import os
@@ -66,7 +68,7 @@ def scrape_player_info(player_url):
     }
     
     # Set path to chromedriver as per your configuration
-    webdriver_service = Service("C:/Users/menes/Documents/Transfermarkt App/chromedriver.exe")  # Your chromedriver path
+    webdriver_service = Service(ChromeDriverManager().install())  # Automatically download and setup ChromeDriver
 
     # Create a webdriver instance
     driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
