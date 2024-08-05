@@ -16,6 +16,12 @@ from openpyxl.utils import get_column_letter
 import requests
 from bs4 import BeautifulSoup
 
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
+
 import re
 import os
 import time
@@ -37,6 +43,11 @@ pd.set_option('display.max_columns', None)  # Show all columns
 
 st.set_page_config(layout='wide')
 
+# Configure Chrome options
+chrome_options = Options()
+chrome_options.add_argument("--headless")  # Ensure GUI is off
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
 
 parquet_file_path = 'Data/Statsbomb_Roles_Potential.parquet'
 data = pd.read_parquet(parquet_file_path)
@@ -54,10 +65,34 @@ def scrape_player_info(player_url):
         "User-Agent": "Mozilla/5.0 (Xll; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chorme/47.0.2526.106 Safari/537.36"
     }
     
-    response = requests.get(player_url, headers=headers)
-    soup = BeautifulSoup(response.content, 'html.parser')
+    # Set path to chromedriver as per your configuration
+    webdriver_service = Service("C:/Users/menes/Documents/Transfermarkt App/chromedriver.exe")  # Your chromedriver path
+
+    # Create a webdriver instance
+    driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
+
+    # Fetch the webpage
+    driver.get(player_url)
+
+    # Wait for JavaScript to load
+    time.sleep(3)
+
+    # Get page source
+    page_source = driver.page_source
+
+    # Parse the rendered HTML with BeautifulSoup
+    soup = BeautifulSoup(page_source, 'html.parser')
     
     player_info = {}
+
+    # Find all elements with the specific class and data-testid attribute
+    value_elements = soup.find_all('span', class_='percentage-value svelte-qus13h', attrs={'data-testid': 'gauge-percentage'})
+
+    # Extract the text content from the second element (index 1)
+    percentage_Minutes_Played = value_elements[1].text if len(value_elements) > 1 else None
+
+    # Save the extracted value into the dictionary
+    player_info['Minutes Percentage'] = percentage_Minutes_Played
 
     player_info['Url'] = player_url
 
@@ -146,7 +181,7 @@ def scrape_player_info(player_url):
     data_player = pd.DataFrame([player_info])
 
     # List of all expected columns
-    expected_columns = ['Id', 'Player', 'Age', 'Height', 'Foot', 'Position', 'Team', 'League', 'Current Market Value', 'Last update', 'Contract expires', 'Contract Option', 'Player agent', 'Url']
+    expected_columns = ['Id', 'Player', 'Age', 'Minutes Percentage', 'Height', 'Foot', 'Position', 'Team', 'League', 'Current Market Value', 'Last update', 'Contract expires', 'Contract Option', 'Player agent', 'Url']
     
     # Ensure all expected columns are in the DataFrame, fill with 'Sem Info' if missing
     for column in expected_columns:
@@ -240,7 +275,7 @@ def merge_all_data(df_player, dfInjury):
 
     # Reorder columns as specified
     columns_order = [
-        'Id', 'Season', 'Player', 'Age', 'Height', 'Foot', 'Position', 
+        'Id', 'Season', 'Player', 'Age', 'Minutes Percentage', 'Height', 'Foot', 'Position', 
         'Current Market Value', 'Team', 'League', 'Injuries', 'Total Days', 
         'Total Games missed', 'Contract expires', 'Contract Option', 
         'Player agent', 'Url'
@@ -298,7 +333,7 @@ if st.button('Get Data'):
             print(player)
     
             # Selecting the necessary columns from transfermarkt_df
-            transfermarkt_selected = transfermarkt_df[['Player', 'Foot', 'Height', 'Current Market Value', 'Injuries', 'Total Days', 'Total Games missed', 'Contract expires', 'Contract Option', 'Player agent']]
+            transfermarkt_selected = transfermarkt_df[['Player', 'Minutes Percentage', 'Foot', 'Height', 'Current Market Value', 'Injuries', 'Total Days', 'Total Games missed', 'Contract expires', 'Contract Option', 'Player agent']]
 
             try:
                 # Merging the dataframes based on 'Player' column
@@ -309,7 +344,7 @@ if st.button('Get Data'):
 
                 # Reorder columns as specified
                 columns_order = [
-                    'Player ID', 'Season', 'Player', 'Age', 'Height', 'Foot', 'Position', 
+                    'Player ID', 'Season', 'Player', 'Age', 'Minutes Percentage', 'Height', 'Foot', 'Position', 
                     'Current Market Value', 'Team', 'League', 'Contract expires', 'Contract Option', 
                     'Player agent', 'Percentile', 'Grade_MLS', 'Percentile_League', 'Grade_League'
                 ]
@@ -318,7 +353,7 @@ if st.button('Get Data'):
 
                 Percentile = int(merged_df['Percentile'].unique()[0])
                 mls_Grade = str(merged_df['Grade_MLS'].unique()[0])
-                mls_League = str(merged_df['Grade_League'].unique()[0])
+                minutes_Percentage = str(merged_df['Minutes Percentage'].unique()[0])
 
                 st.dataframe(merged_df, use_container_width=True)
 
@@ -326,14 +361,14 @@ if st.button('Get Data'):
 
                 col1.metric("Percentile", Percentile, "")
 
-                col2.metric("Grade MLS Context", mls_Grade, "")
+                col2.metric("Minutes Percentage", minutes_Percentage, "")
 
-                col3.metric("Grade League Context", mls_League, "")
+                col3.metric("Grade MLS Context", mls_Grade, "")
 
                 # Download the results as an Excel file
                 st.download_button(
                     label="Download data as Excel",
-                    data=merged_df.to_csv(index=False).encode('utf-8'),
+                    data=data.to_csv(index=False).encode('utf-8'),
                     file_name='player_data_statsbomb_transfermarkt.xlsx',
                     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 )
