@@ -77,7 +77,7 @@ def scrape_player_info(player_url):
     driver.get(player_url)
 
     # Wait for JavaScript to load
-    time.sleep(3)
+    time.sleep(5)
 
     # Get page source
     page_source = driver.page_source
