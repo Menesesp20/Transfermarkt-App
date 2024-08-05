@@ -18,11 +18,12 @@ from bs4 import BeautifulSoup
 
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from webdriver_manager.firefox import GeckoDriverManager
 
 import re
 import os
@@ -61,23 +62,32 @@ data = data[['Player ID', 'Player', 'Team', 'League', 'Age', 'Minutes played', '
              'Counterpress Regains', 'Counterpress Envolvement',
              'Role', 'Score', 'Percentile', 'Percentile_League', 'Grade_MLS', 'Grade_League']]
 
+def install_geckodriver():
+    os.system('sbase install geckodriver')
+    os.system('ln -s /home/appuser/venv/lib/python3.7/site-packages/seleniumbase/drivers/geckodriver /home/appuser/venv/bin/geckodriver')
+
+_ = install_geckodriver()
+
+# Configure Firefox options
+firefox_options = FirefoxOptions()
+firefox_options.add_argument("--headless")  # Ensure GUI is off
 
 def scrape_player_info(player_url):
     headers = {
         "User-Agent": "Mozilla/5.0 (Xll; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chorme/47.0.2526.106 Safari/537.36"
     }
     
-    # Set path to chromedriver as per your configuration
-    webdriver_service = Service(ChromeDriverManager().install())  # Automatically download and setup ChromeDriver
+    # Set path to geckodriver as per your configuration
+    webdriver_service = Service(GeckoDriverManager().install())  # Automatically download and setup GeckoDriver
 
     # Create a webdriver instance
-    driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
+    driver = webdriver.Firefox(service=webdriver_service, options=firefox_options)
 
     # Fetch the webpage
     driver.get(player_url)
 
     # Wait for JavaScript to load
-    time.sleep(5)
+    time.sleep(3)
 
     # Get page source
     page_source = driver.page_source
