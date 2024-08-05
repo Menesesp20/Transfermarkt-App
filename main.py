@@ -377,12 +377,11 @@ if st.button('Get Data'):
 
                 col3.metric("Grade MLS Context", mls_Grade, "")
 
-                # Download the results as an Excel file
                 st.download_button(
-                    label="Download data as Excel",
+                    label="Download data as CSV",
                     data=data.to_csv(index=False).encode('utf-8'),
-                    file_name='player_data_statsbomb_transfermarkt.xlsx',
-                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    file_name='player_data_statsbomb_transfermarkt.csv',
+                    mime='text/csv',
                 )
 
                 if df_Injury.empty:
