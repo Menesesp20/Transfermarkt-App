@@ -287,7 +287,7 @@ def merge_all_data(df_player, dfInjury):
 
     # Reorder columns as specified
     columns_order = [
-        'Id', 'Season', 'Player', 'Age', 'Minutes Played', 'Minutes Percentage', 'Height', 'Foot', 'Position', 
+        'Id', 'Season', 'Player', 'Age', 'Minutes played', 'Minutes Percentage', 'Height', 'Foot', 'Position', 
         'Current Market Value', 'Team', 'League', 'Injuries', 'Total Days', 
         'Total Games missed', 'Contract expires', 'Contract Option', 
         'Player agent', 'Url'
@@ -356,7 +356,7 @@ if st.button('Get Data'):
 
                 # Reorder columns as specified
                 columns_order = [
-                    'Player ID', 'Season', 'Player', 'Age', 'Minutes Played', 'Minutes Percentage', 'Height', 'Foot', 'Position', 
+                    'Player ID', 'Season', 'Player', 'Age', 'Minutes played', 'Minutes Percentage', 'Height', 'Foot', 'Position', 
                     'Current Market Value', 'Team', 'League', 'Contract expires', 'Contract Option', 
                     'Player agent', 'Percentile', 'Grade_MLS', 'Percentile_League', 'Grade_League'
                 ]
@@ -368,7 +368,7 @@ if st.button('Get Data'):
                 minutes_Percentage = int(merged_df['Minutes Percentage'].unique()[0])
 
                 if minutes_Percentage == 0:
-                    minutes_Percentage = str(merged_df['Minutes Played'].unique()[0])
+                    minutes_Percentage = str(merged_df['Minutes played'].unique()[0])
 
                 st.dataframe(merged_df, use_container_width=True)
 
