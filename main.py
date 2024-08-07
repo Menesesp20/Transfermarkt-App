@@ -287,7 +287,7 @@ def merge_all_data(df_player, dfInjury):
 
     # Reorder columns as specified
     columns_order = [
-        'Id', 'Season', 'Player', 'Age', 'Minutes played', 'Minutes Percentage', 'Height', 'Foot', 'Position', 
+        'Id', 'Season', 'Player', 'Age', 'Minutes Percentage', 'Height', 'Foot', 'Position', 
         'Current Market Value', 'Team', 'League', 'Injuries', 'Total Days', 
         'Total Games missed', 'Contract expires', 'Contract Option', 
         'Player agent', 'Url'
