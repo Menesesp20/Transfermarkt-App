@@ -368,9 +368,7 @@ if st.button('Get Data'):
                 minutes_Percentage = str(merged_df['Minutes Percentage'].unique()[0])
 
                 if minutes_Percentage is None:
-                    unique_minutes = merged_df['Minutes played'].unique()[0]
-                    if unique_minutes > 0:
-                        minutes_Percentage = int(unique_minutes[0])
+                    minutes_Percentage = int(merged_df['Minutes played'].unique()[0])
 
                 st.dataframe(merged_df, use_container_width=True)
 
