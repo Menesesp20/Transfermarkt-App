@@ -365,10 +365,10 @@ if st.button('Get Data'):
 
                 Percentile = int(merged_df['Percentile'].mean())
                 mls_Grade = str(merged_df['Grade_MLS'].unique()[0])
-                minutes_Percentage = int(merged_df['Minutes Percentage'].unique()[0])
+                minutes_Percentage = str(merged_df['Minutes Percentage'].unique()[0])
 
                 if minutes_Percentage == 0:
-                    minutes_Percentage = str(merged_df['Minutes played'].unique()[0])
+                    minutes_Percentage = int(merged_df['Minutes played'].unique()[0])
 
                 st.dataframe(merged_df, use_container_width=True)
 
