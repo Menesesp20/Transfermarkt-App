@@ -363,20 +363,23 @@ if st.button('Get Data'):
 
                 merged_df = merged_df[columns_order]
 
-                Percentile = int(merged_df['Percentile'].mean())
-                mls_Grade = str(merged_df['Grade_MLS'].unique()[0])
-                minutes_Percentage = str(merged_df['Minutes Percentage'].unique()[0])
-
-                if minutes_Percentage is None:
-                    minutes_Percentage = int(merged_df['Minutes played'].unique()[0])
-
                 st.dataframe(merged_df, use_container_width=True)
 
                 col1, col2, col3 = st.columns(3)
 
-                col1.metric("Percentile", Percentile, "")
+                Percentile = int(merged_df['Percentile'].mean())
+                mls_Grade = str(merged_df['Grade_MLS'].unique()[0])
+                minutes_Percentage = str(merged_df['Minutes Percentage'].unique()[0])
+                minutes_Percentage_value = merged_df['Minutes Percentage'].unique()[0]
 
-                col2.metric("Minutes Percentage", minutes_Percentage, "")
+                if minutes_Percentage_value is None:
+                    minutes_Percentage = int(merged_df['Minutes played'].unique()[0])
+                    col2.metric("Minutes Played", minutes_Percentage, "")
+                else:
+                    minutes_Percentage = str(minutes_Percentage_value)
+                    col2.metric("Minutes Percentage", minutes_Percentage, "")
+
+                col1.metric("Percentile", Percentile, "")
 
                 col3.metric("Grade MLS Context", mls_Grade, "")
 
