@@ -304,6 +304,68 @@ def remove_accents(player_name):
     return "".join([c for c in nfkd_form if not unicodedata.combining(c)])
 
 
+def fuzzy_merge(df1, df2, key1, key2, norm_key1, norm_key2, threshold=160, limit=1):
+    """
+    Merge two dataframes on two keys with fuzzy matching, returning matches based on a combined score threshold.
+    
+    Parameters:
+    df1 (DataFrame): First DataFrame.
+    df2 (DataFrame): Second DataFrame.
+    key1 (str): Primary key column of the first DataFrame for full names.
+    key2 (str): Primary key column of the second DataFrame for full names.
+    norm_key1 (str): Normalized key column of the first DataFrame.
+    norm_key2 (str): Normalized key column of the second DataFrame.
+    threshold (int, optional): Minimum combined score for a match.
+    limit (int, optional): Number of matches to return per key.
+    
+    Returns:
+    DataFrame: A DataFrame with both keys, match scores, and indices.
+    """
+    # Retrieve lists from second dataframe for comparison
+    full_names = df2[key2].tolist()
+    normalized_names = df2[norm_key2].tolist()
+
+    # Prepare to collect match data
+    match_list = []
+
+    # Iterate over rows in the first dataframe
+    for i, row in df1.iterrows():
+        name_full = row[key1]
+        name_norm = row[norm_key1]
+
+        # Calculate fuzzy match scores using different metrics
+        matches = [(index,
+                    fuzz.ratio(name_full, full_names[index]),  # Basic ratio comparison
+                    fuzz.partial_ratio(name_full, full_names[index]),  # Partial ratio
+                    fuzz.token_set_ratio(name_norm, normalized_names[index]))  # Token set ratio for normalized names
+                   for index in range(len(full_names))]
+
+        # Combine scores: this is a weighted sum of the different scores
+        matches = [(index, score1, score2, score3, score1 + score2 + score3)
+                   for index, score1, score2, score3 in matches]
+
+        # Sort matches by the combined score in descending order
+        matches = sorted(matches, key=lambda x: x[4], reverse=True)
+
+        # Collect matches that meet the threshold
+        for match in matches[:limit]:
+            if match[4] >= threshold:
+                match_list.append({'index_left': i, 'index_right': match[0],
+                                   'score_ratio': match[1], 'score_partial_ratio': match[2],
+                                   'score_token_set_ratio': match[3], 'final_score': match[4]})
+
+    # Create DataFrame from match list
+    match_df = pd.DataFrame(match_list)
+
+    # Ensure the match_df contains 'index_left' and 'index_right'
+    if 'index_left' not in match_df.columns or 'index_right' not in match_df.columns:
+        raise KeyError("The match_df DataFrame does not contain 'index_left' or 'index_right'.")
+
+    # Merge all information from both dataframes based on indices
+    merged_df = pd.merge(match_df, df1, left_on='index_left', right_index=True)
+    merged_df = pd.merge(merged_df, df2, left_on='index_right', right_index=True, suffixes=('_left', '_right'))
+
+    return merged_df
 
 # Streamlit app
 # Center the title
@@ -340,6 +402,11 @@ if st.button('Get Data'):
             transfermarkt_df['Player'] = transfermarkt_df['Player'].apply(remove_accents)
             data['Player'] = data['Player'].apply(remove_accents)
 
+            # Create a unique normalized name to match players between different data sources
+
+            transfermarkt_df['normalized_name'] = transfermarkt_df['Player'] + '_' + 'Bordeaux' + '_' + transfermarkt_df['Age'].astype(str)
+            data['normalized_name'] = data['Player'] + '_' + data['Team'] + '_' + data['Age'].astype(str)
+
             playerName = transfermarkt_df['Player'].unique()[0]
             player = data[(data['Player'].str.contains(playerName))].reset_index(drop=True)
             print(player)
@@ -349,7 +416,7 @@ if st.button('Get Data'):
 
             try:
                 # Merging the dataframes based on 'Player' column
-                merged_df = pd.merge(player, transfermarkt_selected, on='Player', how='left')
+                merged_df = fuzzy_merge(transfermarkt_df, data, 'Player', 'Player', 'normalized_name', 'normalized_name')
 
                 if merged_df.empty:
                     raise IndexError("index 0 is out of bounds for axis 0 with size 0")
