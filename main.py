@@ -404,7 +404,7 @@ if st.button('Get Data'):
 
             # Create a unique normalized name to match players between different data sources
 
-            transfermarkt_df['normalized_name'] = transfermarkt_df['Player'] + '_' + 'Bordeaux' + '_' + transfermarkt_df['Age'].astype(str)
+            transfermarkt_df['normalized_name'] = transfermarkt_df['Player'] + '_' + transfermarkt_df['Team'] + '_' + transfermarkt_df['Age'].astype(str)
             data['normalized_name'] = data['Player'] + '_' + data['Team'] + '_' + data['Age'].astype(str)
 
             playerName = transfermarkt_df['Player'].unique()[0]
