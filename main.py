@@ -365,7 +365,14 @@ def fuzzy_merge(df1, df2, key1, key2, norm_key1, norm_key2, threshold=160, limit
     merged_df = pd.merge(match_df, df1, left_on='index_left', right_index=True)
     merged_df = pd.merge(merged_df, df2, left_on='index_right', right_index=True, suffixes=('_left', '_right'))
 
+    # Drop all columns with '_left' in their names
+    merged_df = merged_df.drop([col for col in merged_df.columns if '_left' in col], axis=1)
+
+    # Rename columns with '_right' by removing '_right' from the column names
+    merged_df.columns = merged_df.columns.str.replace('_right', '')
+
     return merged_df
+
 
 # Streamlit app
 # Center the title
